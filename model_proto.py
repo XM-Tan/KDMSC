@@ -37,30 +37,18 @@ class Multi_attention_Model(nn.Module):
         self.min_max_scaler = preprocessing.MinMaxScaler() 
         self.linear = nn.Linear(1000,768)
         self.max_len = opt.max_length
-        if opt.dataset == "CUB":
-            self.fc_image = nn.Linear(768,312)
-        elif opt.dataset == "AWA2":
-            self.fc_image = nn.Linear(768,85)
-        elif opt.dataset == "SUN":
-            self.fc_image = nn.Linear(768,102)  
-        elif opt.dataset == "zsmars":
+        if opt.dataset == "zsmars":
             if opt.class_embedding == "w2v":
                 self.fc_image = nn.Linear(768,300)
             elif opt.class_embedding == "bert":
                 self.fc_image = nn.Linear(768,768)      
 
         if opt.modaltype == "teacher":
-            if opt.dataset == "AWA2" or opt.dataset == "CUB" or opt.dataset == "zsmars" :
+            if opt.dataset == "zsmars" :
                 self.deit = DeiTForImageClassification.from_pretrained("/work/tanxm/plms/deit-base-distilled-patch16-224")
-
-            elif opt.dataset == "SUN":
-                self.deit = SwinForImageClassification.from_pretrained("/work/tanxm/plms/swin")
         else:
-            if opt.dataset == "AWA2" or opt.dataset == "CUB" or opt.dataset == "zsmars" :
+            if opt.dataset == "zsmars" :
                 self.deit = cotlay(pretrained=True)
-  
-            elif opt.dataset == "SUN":
-                self.deit = SwinForImageClassification.from_pretrained("/work/tanxm/plms/swin")
         
         self.modaltype = opt.modaltype
         student_config = BertConfig.from_pretrained('bert-base-uncased')
