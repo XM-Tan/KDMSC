@@ -30,7 +30,7 @@ import pandas as pd
 cudnn.benchmark = True
 opt = get_opt()
 
-zsl = "gzsl" if opt.gzsl else "zsl"
+zsl = "zsl"
 
 curr_time = datetime.datetime.now()
 opt.modaltype = 'distillation'
@@ -54,8 +54,6 @@ def main():
     data = visual_utils.DATA_LOADER(opt)
 
     opt.data = data
-    if zsl == 'gzsl':
-        opt.test_seen_label = data.test_seen_label
 
     class_semantic = data.seg_features
     label_semantic = data.seg_class               
@@ -90,12 +88,7 @@ def main():
                 ManhattanDistance[i][j] = np.sum(np.fabs(semantic_deal[i] - semantic_deal[j]))
     ManhattanDistance=torch.pow(ManhattanDistance, 2)
 
-    
-    if zsl == 'gzsl':
-        trainloader, testloader_unseen, testloader_seen, visloader = get_loader(opt, data)
-
-    else :
-        trainloader, testloader_unseen, visloader = get_loader(opt, data)
+    trainloader, testloader_unseen, visloader = get_loader(opt, data)
 
 
     csv_train_name = './teacher_csvs/ZSMARS/' + zsl + "-mars_core-teacher-" + str(opt.class_embedding) + "-" + "seen_unseen_ratio-" + str(opt.seen_unseen_ratio) + "-seed-" + str(opt.manualSeed) + "-batch_size-"  + str(opt.batch_size) + '_tea_train_predictions' + '.csv'
@@ -145,18 +138,8 @@ def main():
         model_baseline.load_state_dict(torch.load(opt.resume))
         model_baseline.eval()
 
-        if not opt.gzsl:
-            acc_ZSL = test_zsl(opt, model_baseline, testloader_unseen, data.unseenclasses)
-            logger.info('ZSL test accuracy is {:.1f}%'.format(acc_ZSL))
-        else:
-            acc_GZSL_unseen = test_gzsl(opt, model_baseline, testloader_unseen, data.unseenclasses, opt.calibrated_stacking)
-            acc_GZSL_seen = test_gzsl(opt, model_baseline, testloader_seen, data.seenclasses, opt.calibrated_stacking)
-
-            if (acc_GZSL_unseen + acc_GZSL_seen) == 0:
-                acc_GZSL_H = 0
-            else:
-                acc_GZSL_H = 2 * acc_GZSL_unseen * acc_GZSL_seen / (acc_GZSL_unseen + acc_GZSL_seen)
-            logger.info('GZSL test accuracy is Unseen: {:.1f} Seen: {:.1f} H:{:.1f}'.format(acc_GZSL_unseen, acc_GZSL_seen, acc_GZSL_H))
+        acc_ZSL = test_zsl(opt, model_baseline, testloader_unseen, data.unseenclasses)
+        logger.info('ZSL test accuracy is {:.1f}%'.format(acc_ZSL))
     else:
         logger.info('Train and test...')
         for epoch in range(opt.nepoch):  
@@ -228,60 +211,26 @@ def main():
                 if (i_realindex + 1) != batch and key == 1:
                     continue
 
-                if ((opt.dataset == "SUN") and (((i_realindex + 1) == batch) or((epoch>=5) and (i_realindex +1) == 644)))  \
-                    or ((opt.dataset == "AWA2") and (((i_realindex + 1) == batch) or (((epoch * batch + i_realindex + 1) >= 1000) and ((i_realindex + 1) % (20 * opt.gradient_time) == 0) and (key == 0)))) \
-                    or ((opt.dataset == "CUB") and (((i_realindex + 1) == batch) or((epoch>=5) and (i_realindex +1) == batch/2/opt.gradient_time*opt.gradient_time))) \
-                    or ((opt.dataset == "zsmars") and (((i_realindex + 1) == batch) or((epoch>=5) and (i_realindex +1) == batch/2/opt.gradient_time*opt.gradient_time))):
+                if ((opt.dataset == "zsmars") and (((i_realindex + 1) == batch) or((epoch>=5) and (i_realindex +1) == batch/2/opt.gradient_time*opt.gradient_time))):
                     logger.info('\n[Epoch %d, Batch %5d] Train loss: %.3f '% (epoch+1, batch, loss_log['ave_loss'] / batch))
                     model_baseline.eval()
 
-                    if not opt.gzsl:
-
-                        acc_ZSL, avg_ZSL, testpredict_class = test_zsl(opt, model_baseline, testloader_unseen, semantic_zsl, data.unseenclasses, classindex2name)
+                    acc_ZSL, avg_ZSL, testpredict_class = test_zsl(opt, model_baseline, testloader_unseen, semantic_zsl, data.unseenclasses, classindex2name)
       
-                        if acc_ZSL > result_zsl.best_acc:
-                            patient = 0
-                        else:
-                            patient = patient + 1
-                            print("Counter {} of {}".format(patient,opt.patient))
-                            logger.info("Counter {} of {}".format(patient,opt.patient))
-                            if patient > opt.patient:
-                                print("Early stopping with best_acc: ", result_zsl.best_acc, "and val_acc for this epoch: ", acc_ZSL, "...")
-                                logger.info('Early stopping with best_acc: %s and val_acc for this epoch: %s ...' % (result_zsl.best_acc,acc_ZSL))
-                                sys.exit()
-                        result_zsl.update(epoch+1, acc_ZSL, step = 0.0)
-                        logger.info('\n[Epoch {}] ZSL test accuracy is {:.1f}%, avg_acc is {:.1f}%, Best_acc [{:.1f}% | Epoch-{}]'.format(epoch+1, acc_ZSL, avg_ZSL, result_zsl.best_acc, result_zsl.best_iter))
+                    if acc_ZSL > result_zsl.best_acc:
+                        patient = 0
                     else:
-                        acc_GZSL_unseen, avg_GZSL_unseen, testpredict_class = test_gzsl(opt, model_baseline, testloader_unseen, semantic_gzsl, data.unseenclasses, classindex2name, opt.calibrated_stacking)
-                        acc_GZSL_seen, avg_GZSL_seen, testpredict_class = test_gzsl(opt, model_baseline, testloader_seen, semantic_gzsl, data.seenclasses, classindex2name, opt.calibrated_stacking)
-                        if (acc_GZSL_unseen + acc_GZSL_seen) == 0:
-                            acc_GZSL_H = 0
-                        else:
-                            acc_GZSL_H = 2 * acc_GZSL_unseen * acc_GZSL_seen / (acc_GZSL_unseen + acc_GZSL_seen)
-                        H_max = acc_GZSL_H
-                        U_now = acc_GZSL_unseen
-                        S_now = acc_GZSL_seen
-                        best_calibrated_stacking_number = opt.calibrated_stacking       
-                        
-                        if H_max >= result_gzsl.best_acc:
-                            patient = 0
-                        else:
-                            patient = patient + 1
-                            logger.info("Counter {} of {}".format(patient,opt.patient))
-                            if patient > opt.patient:
-                                logger.info('\n[Epoch {} step {}] GZSL test accuracy is Unseen: {:.1f} Seen: {:.1f} H:{:.1f}'
-                                    '\n           Best_H [Unseen: {:.1f}% Seen: {:.1f}% H: {:.1f}% | Epoch-{} step-{}]'.
-                                    format(epoch+1, i_realindex + 1, U_now, S_now, H_max, result_gzsl.best_acc_U, result_gzsl.best_acc_S, result_gzsl.best_acc, result_gzsl.best_iter, result_zsl.best_step))
-                                logger.info("\nbest_calibrated_stacking_number:{:.1f}".format(result_gzsl.best_calibrated_stacking_number))
-                                sys.exit()
-
-                        result_gzsl.update_gzsl(epoch+1, U_now, S_now, H_max, i_realindex + 1, best_calibrated_stacking_number)
-                        logger.info('\n[Epoch {} step {}] GZSL test accuracy is Unseen: {:.1f} Seen: {:.1f} H:{:.1f}'
-                                    '\n           Best_H [Unseen: {:.1f}% Seen: {:.1f}% H: {:.1f}% | Epoch-{} step-{}]'.
-                                    format(epoch+1, i_realindex + 1, U_now, S_now, H_max, result_gzsl.best_acc_U, result_gzsl.best_acc_S, result_gzsl.best_acc, result_gzsl.best_iter, result_zsl.best_step))
-                        logger.info("\nbest_calibrated_stacking_number:{:.1f}".format(result_gzsl.best_calibrated_stacking_number))            
+                        patient = patient + 1
+                        print("Counter {} of {}".format(patient,opt.patient))
+                        logger.info("Counter {} of {}".format(patient,opt.patient))
+                        if patient > opt.patient:
+                            print("Early stopping with best_acc: ", result_zsl.best_acc, "and val_acc for this epoch: ", acc_ZSL, "...")
+                            logger.info('Early stopping with best_acc: %s and val_acc for this epoch: %s ...' % (result_zsl.best_acc,acc_ZSL))
+                            sys.exit()
+                    result_zsl.update(epoch+1, acc_ZSL, step = 0.0)
+                    logger.info('\n[Epoch {}] ZSL test accuracy is {:.1f}%, avg_acc is {:.1f}%, Best_acc [{:.1f}% | Epoch-{}]'.format(epoch+1, acc_ZSL, avg_ZSL, result_zsl.best_acc, result_zsl.best_iter))           
             
-            if epoch == result_zsl.best_iter:
+            if epoch == (result_zsl.best_iter-1):
                 if isinstance(trainpredict_class, list):
                     trainpredict_class = torch.cat(trainpredict_class, dim=0) 
                 trainpredict_class_np = trainpredict_class.detach().cpu().numpy()
