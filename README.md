@@ -1,6 +1,6 @@
 # KDMSC
-# This repo is built for the paper: A Lightweight Framework with Knowledge Distillation for Zero-Shot Mars Scene Classification 
-## [<a href="https://ieeexplore.ieee.org/document/10699382">Paper</a>]
+## This repo is built for the paper: A Lightweight Framework with Knowledge Distillation for Zero-Shot Mars Scene Classification 
+### [<a href="https://ieeexplore.ieee.org/document/10699382">Paper</a>]
 
 # Getting Started
 ## Installation
