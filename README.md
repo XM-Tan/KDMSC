@@ -2,6 +2,9 @@
 ## This repo is built for the paper: A Lightweight Framework with Knowledge Distillation for Zero-Shot Mars Scene Classification 
 ### [<a href="https://ieeexplore.ieee.org/document/10699382">Paper</a>]
 
+# Abstract
+Gathering extensive labeled data during Mars missions is costly and unrealistic, especially considering the complex and unpredictable Martian environment where new and unfamiliar scenes may emerge. Traditional Mars scene classification (MSC) methods depend heavily on large amounts of labeled data, which makes it impractical to recognize previously unseen scene classes without the necessary labeled examples. In addition, the significant computational demands and parameter requirements of modern models also pose challenges for their integration into resource-constrained systems used in Mars exploration. To address these issues, we propose a zero-shot MSC (ZSMSC) framework, which is able to categorize unseen Martian image scenes without the prior acquisition of vast visual examples. Specifically, the framework combines lightweight model design with knowledge distillation (KD) techniques, known as KDMSC, to streamline complex zero-shot learning (ZSL) models. It employs a KD loss that captures essential knowledge through the training of the teacher model from scratch, thereby improving the zero-shot classification performance of the student model. Consequently, the lightweight student model is tailored for deployment on devices with limited resources while fulfilling the requirements of the ZSMSC tasks. Moreover, to support the ZSMSC initiative, we developed a dataset named ZSMars to further advance this field. Experimental results indicate that our model excels in the ZSMSC tasks while maintaining low computational complexity and storage requirements.
+
 # Getting Started
 ## Installation
 ### Step 1: Clone the KDMSC repository:
