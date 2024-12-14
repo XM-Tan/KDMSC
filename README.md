@@ -47,7 +47,7 @@ pip install h5py
 To train and test KDMSC for zero-shot classification on ZSMars, use the following commands for different configurations:
 
 ```
-python ./main_mars_dis.py --dataset ZSMars --batch_size 6 --manualSeed 42 --seen_unseen_ratio 64
+python ./main_mars_dis.py --dataset ZSMars --batch_size 7 --manualSeed 42 --seen_unseen_ratio 64
 ```
 # Citation
 If it is helpful for your work, please cite this paper:
