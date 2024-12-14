@@ -1,6 +1,6 @@
 # KDMSC
 # This repo is built for the paper: A Lightweight Framework with Knowledge Distillation for Zero-Shot Mars Scene Classification 
-[<a href="https://ieeexplore.ieee.org/document/10699382">Paper</a>]
+## [<a href="https://ieeexplore.ieee.org/document/10699382">Paper</a>]
 
 # Getting Started
 ## Installation
@@ -47,7 +47,7 @@ pip install h5py
 To train and test KDMSC for zero-shot classification on ZSMars, use the following commands for different configurations:
 
 ```
-python ./main_dis.py --dataset ZSMars --batch_size 6 --manualSeed 42 --xlayer_num 1 --seen_unseen_ratio 6010 --random_num 1
+python ./main_mars_dis.py --dataset ZSMars --batch_size 6 --manualSeed 42 --seen_unseen_ratio 64
 ```
 # Citation
 If it is helpful for your work, please cite this paper:
